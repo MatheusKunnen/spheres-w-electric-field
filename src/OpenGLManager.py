@@ -1,6 +1,7 @@
 # @author: Matheus Kunnen Ledesma
 
 import math
+import numpy as np
 
 import pygame
 from pygame.locals import *
@@ -15,8 +16,9 @@ class OpenGLManager:
     display_size = (1200, 800)  # Tamanho da janela a abrir
     sphere_slices = 10          # Divisioes das bolas (> -> Maior Qualidade)
     text_pos = (10, 750)        # Posicao inicial do texto
-    text_dP = 175                # Distancia entre linhas do texto
+    text_dP = 175               # Distancia entre linhas do texto
     D_RENDER_DISTANCE = 100     # Distancia maxima de renderizado
+    STROKE_W = 2.               # Tamanho de Linhas
     """ Ilumination parameters """
     # Posicao da fonte de iluminacao
     LIGHT_ZERO_POSITION = [0, 0, 24, .5]
@@ -36,6 +38,8 @@ class OpenGLManager:
     camera_rot_y = 30.
 
     """ Colors """
+    COLOR_BLACK = [0., 0., 0., 1.]
+    COLOR_WHITE = [1., 1., 1., 1.]
     cube_color = [1., 0., 0., 1.]                       # Cor do frame do Cubo
     vector_color = [1, 1, 1, 1]             # Cor da esfera
     # Cor da sombra da esfera
@@ -46,62 +50,59 @@ class OpenGLManager:
     sphere_collision_diffuse_color = [1., .0, 0., 1.]   # Cor das bolas
     sphere_collision_ambient_color = [.5, .0,
                                       0., .1]   # Cor ambiente? das bolas
-    # text_color = [10., 10., 10., 1.]                    # Cor do texto
-    text_color = [0., 0., 0., 1000.]                    # Cor do texto
 
-    def __init__(self, display_title):
+    def __init__(self, display_title, bg_color=COLOR_WHITE):
         self.running = False
         self.display_title = display_title
         self.render_distance = OpenGLManager.D_RENDER_DISTANCE
+        self.bg_color = np.array(bg_color)
         self.captions = []
+        self.init_colors()
+
+    def init_colors(self):
+        self.vector_color = self.text_color = self.p_color = np.array([1., 1., 1., 2.]) - self.bg_color
+         
 
     def init_display(self):
         if self.running:
             return True
-
+        # Init Window
         pygame.init()
         pygame.display.set_mode(
-            self.display_size, DOUBLEBUF | OPENGL)
+            self.display_size, pygame.DOUBLEBUF | OPENGL)
         pygame.display.set_caption(self.display_title)
         pygame.display.gl_set_attribute(GL_ACCELERATED_VISUAL, True)
-        glClearColor(0.1, 0.1, 0.1, 1.)
+        # Config window
+        glClearColor(self.bg_color[0], self.bg_color[1],
+                     self.bg_color[2], self.bg_color[3])
         glShadeModel(GL_SMOOTH)
         glEnable(GL_CULL_FACE)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHTING)
         glCullFace(GL_BACK)
-
+        # Init light
         glLightfv(GL_LIGHT0, GL_AMBIENT, self.LIGHT_ZERO_AMBIENT)
         glLightfv(GL_LIGHT0, GL_POSITION, self.LIGHT_ZERO_POSITION)
         glLightfv(GL_LIGHT0, GL_DIFFUSE, self.LIGHT_ZERO_COLOR)
         glLightfv(GL_LIGHT0, GL_SPECULAR, self.LIGHT_ZERO_SPECULAR)
-
         glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.5)
         glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.01)
         glEnable(GL_LIGHT0)
 
+        # Init Camera
         glMatrixMode(GL_PROJECTION)
         gluPerspective(
             45, (self.display_size[0] / self.display_size[1]), 0.1, self.render_distance)
 
         glMatrixMode(GL_MODELVIEW)
-        glClearColor(1, 1, 1, 1)
         glPushMatrix()
 
-        # Init camera
+        # Pos Camera
         self.set_cam_pos(self.cam_pos)
         self.rotate_cam(self.cam_rot)
 
         self.running = True
         return True
-
-    def setup_cam(self, cam_pos, cam_rot):
-        glMatrixMode(GL_MODELVIEW)
-        glPopMatrix()
-        glPushMatrix()
-        glRotatef(-60, 1., 0., 0.)
-        glTranslatef(cam_pos[0], cam_pos[1], cam_pos[2])
-        self.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
 
     def set_cam_pos(self, cam_pos):
         self.cam_pos = cam_pos
@@ -109,17 +110,6 @@ class OpenGLManager:
         glPopMatrix()
         glPushMatrix()
         glTranslatef(cam_pos[0], cam_pos[1], cam_pos[2])
-        self.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
-
-    def set_rot_cam(self, cam_rot):
-        # self.cam_rot = cam_rot
-        glMatrixMode(GL_MODELVIEW)
-        glPopMatrix()
-        glPushMatrix()
-        # glTranslatef(self.cam_pos[0], self.cam_pos[1], self.cam_pos[2])
-        glRotatef(cam_rot[0], 1., 0., 0.)
-        glRotatef(cam_rot[1], 0., 1., 0.)
-        glRotatef(cam_rot[2], 0., 0., 1.)
         self.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
 
     def move_cam(self, cam_move):
@@ -135,6 +125,7 @@ class OpenGLManager:
         # apply rotation
         glRotatef(self.cam_rot[0], 1., 0., 0.)
         glRotatef(self.cam_rot[1], 0., 1., 0.)
+
         # multiply the current matrix by the get the new view matrix and store the final vie matrix
         glMultMatrixf(self.viewMatrix)
         self.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
@@ -152,17 +143,10 @@ class OpenGLManager:
         glRotatef(cam_rot[0], 1., 0., 0.)
         glRotatef(cam_rot[1], 0., 1., 0.)
 
-        # init the view matrix
-        # glPushMatrix()
-        # glLoadIdentity()
-
         # multiply the current matrix by the get the new view matrix and store the final vie matrix
         glMultMatrixf(self.viewMatrix)
         self.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
 
-        # apply view matrix
-        # glPopMatrix()
-       # glMultMatrixf(self.viewMatrix)
 
     def clear_buffer(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -183,6 +167,10 @@ class OpenGLManager:
         glMatrixMode(GL_MODELVIEW)
         glPushMatrix()
         glLoadIdentity()
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
+        glEnable(GL_LINE_SMOOTH)
+        glLineWidth(OpenGLManager.STROKE_W)
         glTranslatef(self.text_pos[0], self.text_pos[1], 0)
         glScalef(0.1, 0.1, 0.1)
         glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, self.text_color)
@@ -190,31 +178,21 @@ class OpenGLManager:
             glPushMatrix()
             glTranslatef(0,
                          - i*self.text_dP, 0)
-            # glTranslatef(self.text_pos[0],
-            #              self.text_pos[1] - i*self.text_dP, 0.)
-            #glRasterPos2d(self.text_pos[0], self.text_pos[1] - i*self.text_dP)
             for j in range(len(caption)):
                 glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN,
                                     ord(caption[j]))
-                # glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,ord(self.captions[i][j]))
             glPopMatrix()
 
         """ Making sure we can render 3d again """
         glMatrixMode(GL_PROJECTION)
         glPopMatrix()
         glMatrixMode(GL_MODELVIEW)
-        # --self.set_cam_pos(self.cam_pos)
-        # --self.set_rot_cam(self.cam_rot)
-        # glTranslatef(cam_pos[0], cam_pos[1], cam_pos[2])
-        # glRotatef(camera_rot_x, 1., 0., 0.)
-        # glRotatef(camera_rot_y, 0., 1., 0.)
         glPopMatrix()
 
     def draw_solid_sphere(self, sphere_pos, sphere_radius, sphere_ambient_color=sphere_ambient_color):
         glPushMatrix()
-        K = 1
+        K = 1.5
         glMaterialfv(GL_FRONT, GL_AMBIENT, sphere_ambient_color)
-        # glMaterialfv(GL_FRONT, GL_DIFFUSE, self.sphere_diffuse_color)
         glMaterialfv(GL_FRONT, GL_DIFFUSE, [
                      sphere_ambient_color[0]*K,
                      sphere_ambient_color[1]*K,
@@ -227,19 +205,24 @@ class OpenGLManager:
 
     def draw_cube_frame(self, cube_length, cube_color=cube_color):
         glPushMatrix()
-        glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, self.cube_color)
+        glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, cube_color)
         glTranslatef(0, 0, 0)
         glutWireCube(cube_length)
         glPopMatrix()
 
     def draw_vector(self, p_0, p_1):
         glPushMatrix()
-        glMaterialfv(GL_FRONT, GL_AMBIENT, self.vector_color)
-
+        # Config stroke
+        glMaterialfv(GL_FRONT, GL_AMBIENT, self.p_color)
+        glEnable(GL_BLEND)
+        glEnable(GL_LINE_SMOOTH)
+        glLineWidth(OpenGLManager.STROKE_W)
+        # Draw Stroke
         glBegin(GL_LINES)
         glVertex3f(p_0[0], p_0[1], p_0[2])
         glVertex3f(p_0[0]+p_1[0], p_0[1]+p_1[1], p_0[2]+p_1[2])
         glEnd()
+        # Draw Point
         glTranslatef(p_0[0]+p_1[0], p_0[1]+p_1[1], p_0[2]+p_1[2])
         glutSolidSphere(.005, self.sphere_slices, self.sphere_slices)
         glPopMatrix()
