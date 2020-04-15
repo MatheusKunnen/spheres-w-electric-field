@@ -13,10 +13,10 @@ from OpenGL.GLUT import *
 class OpenGLManager:
     """ General parameters """
     display_size = (1200, 800)  # Tamanho da janela a abrir
-    sphere_slices = 6          # Divisioes das bolas (> -> Maior Qualidade)
+    sphere_slices = 10          # Divisioes das bolas (> -> Maior Qualidade)
     text_pos = (10, 750)        # Posicao inicial do texto
-    text_dP = 15                # Distancia entre linhas do texto
-
+    text_dP = 175                # Distancia entre linhas do texto
+    D_RENDER_DISTANCE = 100     # Distancia maxima de renderizado
     """ Ilumination parameters """
     # Posicao da fonte de iluminacao
     LIGHT_ZERO_POSITION = [0, 0, 24, .5]
@@ -28,7 +28,7 @@ class OpenGLManager:
     LIGHT_ZERO_SPECULAR = [1., 1., 1., .5]
 
     """ Camera parameters """
-    cam_pos = [0, 1, -12]     # Posicao da camera (visao)
+    cam_pos = [0, 0, 0]     # Posicao da camera (visao)
     cam_rot = [0, 0, 0]     # Rotacao da camera
     # Rotacao da camera no eixo x (visao)
     camera_rot_x = 30.
@@ -46,11 +46,13 @@ class OpenGLManager:
     sphere_collision_diffuse_color = [1., .0, 0., 1.]   # Cor das bolas
     sphere_collision_ambient_color = [.5, .0,
                                       0., .1]   # Cor ambiente? das bolas
-    text_color = [10., 10., 10., 1.]                    # Cor do texto
+    # text_color = [10., 10., 10., 1.]                    # Cor do texto
+    text_color = [0., 0., 0., 1000.]                    # Cor do texto
 
     def __init__(self, display_title):
         self.running = False
         self.display_title = display_title
+        self.render_distance = OpenGLManager.D_RENDER_DISTANCE
         self.captions = []
 
     def init_display(self):
@@ -62,7 +64,7 @@ class OpenGLManager:
             self.display_size, DOUBLEBUF | OPENGL)
         pygame.display.set_caption(self.display_title)
         pygame.display.gl_set_attribute(GL_ACCELERATED_VISUAL, True)
-        glClearColor(0., 0., 0., 1.)
+        glClearColor(0.1, 0.1, 0.1, 1.)
         glShadeModel(GL_SMOOTH)
         glEnable(GL_CULL_FACE)
         glEnable(GL_DEPTH_TEST)
@@ -80,16 +82,16 @@ class OpenGLManager:
 
         glMatrixMode(GL_PROJECTION)
         gluPerspective(
-            45, (self.display_size[0] / self.display_size[1]), 0.1, 50.0)
+            45, (self.display_size[0] / self.display_size[1]), 0.1, self.render_distance)
 
         glMatrixMode(GL_MODELVIEW)
+        glClearColor(1, 1, 1, 1)
         glPushMatrix()
 
+        # Init camera
         self.set_cam_pos(self.cam_pos)
-        self.set_rot_cam(self.cam_rot)
-        # glTranslatef(cam_pos[0], cam_pos[1], cam_pos[2])
-        # glRotatef(camera_rot_x, 1., 0., 0.)
-        # glRotatef(camera_rot_y, 0., 1., 0.)
+        self.rotate_cam(self.cam_rot)
+
         self.running = True
         return True
 
@@ -98,8 +100,6 @@ class OpenGLManager:
         glPopMatrix()
         glPushMatrix()
         glRotatef(-60, 1., 0., 0.)
-        #glRotatef(cam_rot[1], 0., 1., 0.)
-        #glRotatef(cam_rot[2], 0., 0., 1.)
         glTranslatef(cam_pos[0], cam_pos[1], cam_pos[2])
         self.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
 
@@ -116,7 +116,7 @@ class OpenGLManager:
         glMatrixMode(GL_MODELVIEW)
         glPopMatrix()
         glPushMatrix()
-        #glTranslatef(self.cam_pos[0], self.cam_pos[1], self.cam_pos[2])
+        # glTranslatef(self.cam_pos[0], self.cam_pos[1], self.cam_pos[2])
         glRotatef(cam_rot[0], 1., 0., 0.)
         glRotatef(cam_rot[1], 0., 1., 0.)
         glRotatef(cam_rot[2], 0., 0., 1.)
@@ -126,19 +126,15 @@ class OpenGLManager:
         # init model view matrix
         glLoadIdentity()
 
-        # apply the look up and down
-        # up_down_angle += mouseMove[1]*0.1
-        # glRotatef(up_down_angle, 1.0, 0.0, 0.0)
-
         # init the view matrix
         glPushMatrix()
         glLoadIdentity()
 
         glTranslatef(cam_move[0], cam_move[1], cam_move[2])
 
-        # apply the left and right rotation
-        # glRotatef(mouseMove[0]*0.1, 0.0, 1.0, 0.0)
-
+        # apply rotation
+        glRotatef(self.cam_rot[0], 1., 0., 0.)
+        glRotatef(self.cam_rot[1], 0., 1., 0.)
         # multiply the current matrix by the get the new view matrix and store the final vie matrix
         glMultMatrixf(self.viewMatrix)
         self.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
@@ -148,31 +144,25 @@ class OpenGLManager:
         glMultMatrixf(self.viewMatrix)
 
     def rotate_cam(self, cam_rot):
+        self.cam_rot = cam_rot
         # init model view matrix
         glLoadIdentity()
 
         # apply the look up and down
-        # up_down_angle += mouseMove[1]*0.1
-        # glRotatef(up_down_angle, 1.0, 0.0, 0.0)
         glRotatef(cam_rot[0], 1., 0., 0.)
         glRotatef(cam_rot[1], 0., 1., 0.)
-        glRotatef(cam_rot[2], 0., 0., 1.)
+
         # init the view matrix
-        glPushMatrix()
-        glLoadIdentity()
-
-        # glTranslatef(cam_move[0], cam_move[1], cam_move[2])
-
-        # apply the left and right rotation
-        # glRotatef(mouseMove[0]*0.1, 0.0, 1.0, 0.0)
+        # glPushMatrix()
+        # glLoadIdentity()
 
         # multiply the current matrix by the get the new view matrix and store the final vie matrix
         glMultMatrixf(self.viewMatrix)
         self.viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
 
         # apply view matrix
-        glPopMatrix()
-        glMultMatrixf(self.viewMatrix)
+        # glPopMatrix()
+       # glMultMatrixf(self.viewMatrix)
 
     def clear_buffer(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -193,20 +183,28 @@ class OpenGLManager:
         glMatrixMode(GL_MODELVIEW)
         glPushMatrix()
         glLoadIdentity()
-
+        glTranslatef(self.text_pos[0], self.text_pos[1], 0)
+        glScalef(0.1, 0.1, 0.1)
         glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, self.text_color)
-        for i in range(len(self.captions)):
-            glRasterPos2d(self.text_pos[0], self.text_pos[1] - i*self.text_dP)
-            for j in range(len(self.captions[i])):
-                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,
-                                    ord(self.captions[i][j]))
+        for i, caption in enumerate(self.captions):
+            glPushMatrix()
+            glTranslatef(0,
+                         - i*self.text_dP, 0)
+            # glTranslatef(self.text_pos[0],
+            #              self.text_pos[1] - i*self.text_dP, 0.)
+            #glRasterPos2d(self.text_pos[0], self.text_pos[1] - i*self.text_dP)
+            for j in range(len(caption)):
+                glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN,
+                                    ord(caption[j]))
+                # glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24,ord(self.captions[i][j]))
+            glPopMatrix()
 
         """ Making sure we can render 3d again """
         glMatrixMode(GL_PROJECTION)
         glPopMatrix()
         glMatrixMode(GL_MODELVIEW)
-        self.set_cam_pos(self.cam_pos)
-        self.set_rot_cam(self.cam_rot)
+        # --self.set_cam_pos(self.cam_pos)
+        # --self.set_rot_cam(self.cam_rot)
         # glTranslatef(cam_pos[0], cam_pos[1], cam_pos[2])
         # glRotatef(camera_rot_x, 1., 0., 0.)
         # glRotatef(camera_rot_y, 0., 1., 0.)

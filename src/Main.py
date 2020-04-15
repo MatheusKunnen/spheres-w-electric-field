@@ -27,24 +27,28 @@ class Main:
     ring_v = []
 
     def __init__(self):
+        # Init General Var
         self.is_running = False
         self.is_paused = True
         self.dt = 1/60.0
         self.target_dt = 1/30.0
         self.move_vector = np.array([0., 0., 0.])
         self.rot_vector = np.array([0., 0., 0.])
-        self.g_manager = OpenGLManager("Electric Field")
         self.t_total = 0
-        self.cam_pos = np.array([0, 30, -10])
-        self.cam_rot = np.array([0, 0, 0])
+        # Init Bodies
         self.body = Body(1, .1, 1, np.array(
-            [.1, 0, 0]), np.array([0, 0, 2]), -10)
+            [0, 0, 0]), np.array([0, 0, 2]), -10)
         self.ring = Ring(np.array([0, 0, 0]), 10, 320)
         self.E = np.array([0., 0., 0.])
+        # Init Graphics Manager
+        self.g_manager = OpenGLManager("Electric Field")
+        self.cam_pos = np.array([0, 20, -5])
+        self.cam_rot = np.array([-40, 0, 0])
+        self.g_manager.cam_pos = self.cam_pos
+        self.g_manager.cam_rot = self.cam_rot
 
     def run(self):
         self.is_running = self.g_manager.init_display()
-        self.g_manager.set_cam_pos(self.cam_pos)
 
         while self.is_running:
             t1 = time.time()
@@ -74,21 +78,27 @@ class Main:
             "-> General Parameters",
             f"       FPS: {round(1/self.dt,0)}",
             f"Cam. dPos.: {np.round(self.cam_pos, 2)}",
-            f"Cam. dRot.: {np.round(self.body.b_pos, 2)}",
+            f"Cam. dRot.: {np.round(self.cam_rot, 2)}",
             f"Status: {txt_status}", "",
             "-> Central Body ",
             f"   P: {np.round(self.body.b_pos, 3)}",
-            f"  dP: {np.round(self.body.b_vel, 3)}",
-            f"d^2P: {np.round(self.body.b_aceleration, 3)}",
-            f"E(P): {np.round(self.E, 3)}"]
+            f"   V: {np.round(self.body.b_vel, 3)}",
+            f"   A: {np.round(self.body.b_aceleration, 3)}",
+            f"E(P): {np.round(self.E, 3)}", "",
+            "-> Ring",
+            f"     P: {np.round(self.ring.r_pos, 3)}",
+            f"Radius: {round(self.ring.r_radius,3)}",
+            f"     Q: {round(self.ring.r_charge,3)}",
+            f"N. Spheres: {round(self.ring.n_bodies,3)}",
+            f" Q Spheres: {round(self.ring.q_bodies,3)}"]
         self.g_manager.draw_captions()
 
     def update_dt(self, t1, t2):
         self.dt = t2 - t1
         self.t_total += self.dt
         if self.dt > self.target_dt:
-            pass
-            # print(f"FPS {round(1/self.dt,1)} | {round((self.dt - self.target_dt)/self.target_dt,1)} frames missed")
+            print(
+                f"FPS {round(1/self.dt,1)} | {round((self.dt - self.target_dt)/self.target_dt,1)} frames missed")
         else:
             self.g_manager.wait(self.target_dt - self.dt)
 
@@ -96,7 +106,6 @@ class Main:
         r_ring = 10
         ds = math.pi/32
         r = (2 * math.pi * r_ring / (32 * 2)) * 0.5
-        # print(r)
         n = 0
         while n <= 2*math.pi:
             self.g_manager.draw_solid_sphere(

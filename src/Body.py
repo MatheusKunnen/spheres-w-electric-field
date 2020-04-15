@@ -19,11 +19,10 @@ class Body:
         self.b_aceleration = np.array([0., 0., 0.])
 
     def update(self, dt):
-
-        # Atualiza posicao do corpo
-        self.b_pos = self.b_pos + self.b_vel*dt + .5*self.b_aceleration*dt*dt
         # Atualiza velocidade do corpo
         self.b_vel = self.b_vel + self.b_aceleration*dt
+        # Atualiza posicao do corpo
+        self.b_pos = self.b_pos + self.b_vel*dt  # + .5*self.b_aceleration*dt*dt
 
     def draw(self, g_manager):
         g_manager.draw_solid_sphere(self.b_pos, self.b_radius, self.b_color)
