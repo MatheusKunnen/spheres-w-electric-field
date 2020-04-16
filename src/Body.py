@@ -1,3 +1,5 @@
+# @author: Matheus Kunnen Ledesma
+
 import math
 import numpy as np
 
@@ -24,9 +26,9 @@ class Body:
         # Atualiza posicao do corpo
         self.b_pos = self.b_pos + self.b_vel*dt  # + .5*self.b_aceleration*dt*dt
 
-    def draw(self, g_manager):
+    def draw(self, g_manager, draw_vel_vector = False):
         g_manager.draw_solid_sphere(self.b_pos, self.b_radius, self.b_color)
-        if (self.norm_e(self.b_vel) != 0):
+        if draw_vel_vector:
             g_manager.draw_vector(self.b_pos, self.b_vel)
 
     def get_electric_field(self, p_pos):

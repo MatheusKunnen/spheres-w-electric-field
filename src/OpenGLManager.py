@@ -13,7 +13,7 @@ from OpenGL.GLUT import *
 
 class OpenGLManager:
     """ General parameters """
-    display_size = (1200, 800)  # Tamanho da janela a abrir
+    display_size = (1400, 800)  # Tamanho da janela a abrir
     sphere_slices = 10          # Divisioes das bolas (> -> Maior Qualidade)
     text_pos = (10, 750)        # Posicao inicial do texto
     text_dP = 175               # Distancia entre linhas do texto
@@ -210,6 +210,8 @@ class OpenGLManager:
         glutWireCube(cube_length)
         glPopMatrix()
 
+
+
     def draw_vector(self, p_0, p_1):
         glPushMatrix()
         # Config stroke
@@ -226,3 +228,56 @@ class OpenGLManager:
         glTranslatef(p_0[0]+p_1[0], p_0[1]+p_1[1], p_0[2]+p_1[2])
         glutSolidSphere(.005, self.sphere_slices, self.sphere_slices)
         glPopMatrix()
+
+    def draw_2d_graph(self, g_pos, g_size, g_scale, g_min, g_points, caption):
+        """ Set 2D mode"""
+        glMatrixMode(GL_PROJECTION)
+        glPushMatrix()
+        glLoadIdentity()
+        gluOrtho2D(0.0, self.display_size[0], 0.0, self.display_size[1])
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glLoadIdentity()
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
+        glEnable(GL_LINE_SMOOTH)
+        glLineWidth(OpenGLManager.STROKE_W)
+
+        # Draw Graphs points
+        glPushMatrix()
+        glTranslatef(g_pos[0], g_pos[1], 0)
+        glScalef(1, 1, 1)
+        glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, self.text_color)
+        glBegin(GL_LINE_STRIP)
+        for point in g_points:
+            glVertex2d((point[0] - g_min[0])*g_scale[0], (point[1] - g_min[1])*g_scale[1])
+        glEnd()
+        glPopMatrix()
+
+        # Draw Graph Box
+        glPushMatrix()
+        glLineWidth(OpenGLManager.STROKE_W*2)
+        glBegin(GL_LINE_STRIP)  
+        glVertex2f(g_pos[0], g_pos[1])       
+        glVertex2f(g_pos[0] + g_size[0], g_pos[1])         
+        glVertex2f(g_pos[0] + g_size[0], g_pos[1] + g_size[1])          
+        glVertex2f(g_pos[0], g_pos[1] + g_size[1])          
+        glVertex2f(g_pos[0], g_pos[1])
+        glEnd()
+        glPopMatrix()
+
+        # Draw caption
+        glPushMatrix()
+        glLineWidth(OpenGLManager.STROKE_W)
+        glTranslatef(g_pos[0], g_pos[1] + g_size[1] + 5, 0)
+        glScalef(0.1, 0.1, 0.1)
+        for j in range(len(caption)):
+            glutStrokeCharacter(GLUT_STROKE_MONO_ROMAN, ord(caption[j]))
+        glPopMatrix()
+
+        """ Making sure we can render 3d again """
+        glMatrixMode(GL_PROJECTION)
+        glPopMatrix()
+        glMatrixMode(GL_MODELVIEW)
+        glPopMatrix()
+

@@ -12,6 +12,8 @@ from OpenGL.GLUT import *
 
 from Body import Body
 from Ring import Ring
+from Graph import Graph
+
 import time
 import math
 
@@ -37,7 +39,7 @@ class Main:
 
         # Init Bodies
         self.init_bodies()
-
+        
         # Init Graphics Manager
         self.g_manager = OpenGLManager("Sphere in a Ring's Electric Field | Matheus Kunnen ")
         self.move_vector = np.array([0., 0., 0.])
@@ -47,10 +49,33 @@ class Main:
         self.g_manager.cam_pos = self.cam_pos
         self.g_manager.cam_rot = self.cam_rot
 
+        self.init_graphs()
+
     def init_bodies(self):
         self.body = Body(1, .1, 1, np.array([0, 0, 0]), np.array([0, 0, 2]), -10)
         self.ring = Ring(np.array([0, 0, 0]), 10, 320)
         self.E = np.array([0., 0., 0.])
+
+    def init_graphs(self):
+        graphs_s = [600, 80]
+        n_points = 1000
+        n = 1
+        self.graph_pos = Graph("Pos. (P x t)", ["t", "P"], 1000, 
+                            np.array(graphs_s), 
+                            np.array([self.g_manager.display_size[0] - graphs_s[0] - 10, 
+                            self.g_manager.display_size[1] - n*graphs_s[1] - 20]))
+        n += 1
+        self.graph_vel = Graph("Vel. (V x t)", ["t", "V"], 1000, 
+                            np.array(graphs_s), 
+                            np.array([self.g_manager.display_size[0] - graphs_s[0] - 10, 
+                            self.g_manager.display_size[1] - n*graphs_s[1] - n*20]))
+
+        # n += 1
+        # self.graph_ace = Graph("Ace. (A x t)", ["t", "A"], 1000, 
+        #                     np.array(graphs_s), 
+        #                     np.array([self.g_manager.display_size[0] - graphs_s[0] - 10, 
+        #                     self.g_manager.display_size[1] - n*graphs_s[1] - n*20]))
+        
 
     def run(self):
         self.is_running = self.g_manager.init_display()
@@ -68,13 +93,23 @@ class Main:
 
     def draw(self):
         self.draw_hud()
-        self.body.draw(self.g_manager)
+        self.graph_pos.draw(self.g_manager)
+        self.graph_vel.draw(self.g_manager)
+        self.graph_ace.draw(self.g_manager)
+        self.body.draw(self.g_manager, True)
         self.ring.draw(self.g_manager)
 
     def update(self):
         self.E = self.ring.get_electric_field(self.body.b_pos)
         self.body.b_aceleration = self.E * (self.body.b_charge/self.body.b_mass)
         self.body.update(self.dt*self.dt_k)
+        self.update_graphs()
+    
+    def update_graphs(self):
+        self.graph_pos.put(np.array([float(self.t_total), float(self.body.b_pos[2])]))
+        self.graph_vel.put(np.array([float(self.t_total), float(self.body.b_vel[2])]))
+        # self.graph_ace.put(np.array([float(self.t_total), float(np.linalg.norm(self.E))]))
+        
 
     def draw_hud(self):
         if not self.hud_enabled:
@@ -103,22 +138,13 @@ class Main:
 
     def update_dt(self, t1, t2):
         self.dt = t2 - t1
-        self.t_total += self.dt
+        self.t_total += self.dt if not self.is_paused else 0.
         if self.dt > self.target_dt:
             print(
                 f"FPS {round(1/self.dt,1)} | {round((self.dt - self.target_dt)/self.target_dt,1)} frames missed")
         else:
             self.g_manager.wait(self.target_dt - self.dt)
 
-    def draw_sphere_ring(self):
-        r_ring = 10
-        ds = math.pi/32
-        r = (2 * math.pi * r_ring / (32 * 2)) * 0.5
-        n = 0
-        while n <= 2*math.pi:
-            self.g_manager.draw_solid_sphere(
-                [r_ring*math.cos(n), r_ring*math.sin(n), 0], r)
-            n += ds
 
     def check_events(self):
         for event in pygame.event.get():
