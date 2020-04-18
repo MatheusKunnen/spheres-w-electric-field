@@ -36,6 +36,7 @@ class Main:
         self.target_dt = 1/30.0
         self.t_total = 0
         self.hud_enabled = True
+        self.graphs_enabled = True
 
         # Init Bodies
         self.init_bodies()
@@ -49,32 +50,34 @@ class Main:
         self.g_manager.cam_pos = self.cam_pos
         self.g_manager.cam_rot = self.cam_rot
 
+        # Init Graphs
         self.init_graphs()
 
     def init_bodies(self):
-        self.body = Body(1, .1, 1, np.array([0, 0, 0]), np.array([0, 0, 2]), -10)
+        self.body = Body(1., .1, 1., np.array([0., 0., 0.]), np.array([0., 0., 4.]), -10)
         self.ring = Ring(np.array([0, 0, 0]), 10, 320)
         self.E = np.array([0., 0., 0.])
 
     def init_graphs(self):
         graphs_s = [600, 80]
+        graphs_offset = [-10, -20]
         n_points = 1000
         n = 1
-        self.graph_pos = Graph("Pos. (P x t)", ["t", "P"], 1000, 
+        self.graph_pos = Graph("Pos. [Z] (P x t)", ["t", "P"], n_points, 
                             np.array(graphs_s), 
-                            np.array([self.g_manager.display_size[0] - graphs_s[0] - 10, 
-                            self.g_manager.display_size[1] - n*graphs_s[1] - 20]))
+                            np.array([self.g_manager.display_size[0] - graphs_s[0] +  graphs_offset[0], 
+                            self.g_manager.display_size[1] - n*graphs_s[1] + n*graphs_offset[1]]))
         n += 1
-        self.graph_vel = Graph("Vel. (V x t)", ["t", "V"], 1000, 
+        self.graph_vel = Graph("Vel. [Z] (V x t)", ["t", "V"], n_points, 
+                            np.array(graphs_s), 
+                            np.array([self.g_manager.display_size[0] - graphs_s[0] + graphs_offset[0], 
+                            self.g_manager.display_size[1] - n*graphs_s[1] + n*graphs_offset[1]]))
+
+        n += 1
+        self.graph_ace = Graph("Ace. [Z] (A x t)", ["t", "A"], 1000, 
                             np.array(graphs_s), 
                             np.array([self.g_manager.display_size[0] - graphs_s[0] - 10, 
                             self.g_manager.display_size[1] - n*graphs_s[1] - n*20]))
-
-        # n += 1
-        # self.graph_ace = Graph("Ace. (A x t)", ["t", "A"], 1000, 
-        #                     np.array(graphs_s), 
-        #                     np.array([self.g_manager.display_size[0] - graphs_s[0] - 10, 
-        #                     self.g_manager.display_size[1] - n*graphs_s[1] - n*20]))
         
 
     def run(self):
@@ -93,11 +96,16 @@ class Main:
 
     def draw(self):
         self.draw_hud()
+        self.draw_graphs()
+        self.body.draw(self.g_manager, True)
+        self.ring.draw(self.g_manager)
+
+    def draw_graphs(self):
+        if not self.graphs_enabled:
+            return
         self.graph_pos.draw(self.g_manager)
         self.graph_vel.draw(self.g_manager)
         self.graph_ace.draw(self.g_manager)
-        self.body.draw(self.g_manager, True)
-        self.ring.draw(self.g_manager)
 
     def update(self):
         self.E = self.ring.get_electric_field(self.body.b_pos)
@@ -108,7 +116,7 @@ class Main:
     def update_graphs(self):
         self.graph_pos.put(np.array([float(self.t_total), float(self.body.b_pos[2])]))
         self.graph_vel.put(np.array([float(self.t_total), float(self.body.b_vel[2])]))
-        # self.graph_ace.put(np.array([float(self.t_total), float(np.linalg.norm(self.E))]))
+        self.graph_ace.put(np.array([float(self.t_total), float(self.body.b_aceleration[2])]))
         
 
     def draw_hud(self):
@@ -177,6 +185,8 @@ class Main:
                     self.dt_k -= Main.DT_K
                 elif event.key == pygame.K_p and event.type == pygame.KEYDOWN:
                     self.is_paused = not self.is_paused
+                elif event.key == pygame.K_g and event.type == pygame.KEYDOWN:
+                    self.graphs_enabled = not self.graphs_enabled
             if event.type == pygame.QUIT:
                 is_running = False
                 pygame.quit()
