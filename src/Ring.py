@@ -45,5 +45,4 @@ class Ring:
         e_v = np.array([0., 0., 0.])
         for body in self.bodies_v:
             e_v += body.get_electric_field(pos)
-        # return np.round(e_v, 2)
-        return np.round(e_v, 5)
+        return np.round(e_v, 14)

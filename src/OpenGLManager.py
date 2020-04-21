@@ -211,11 +211,12 @@ class OpenGLManager:
         glPopMatrix()
 
 
-
-    def draw_vector(self, p_0, p_1):
+    def draw_vector(self, p_0, p_1, vector_color = None):
+        if vector_color is None:
+            vector_color = self.p_color
         glPushMatrix()
         # Config stroke
-        glMaterialfv(GL_FRONT, GL_AMBIENT, self.p_color)
+        glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, vector_color)
         glEnable(GL_BLEND)
         glEnable(GL_LINE_SMOOTH)
         glLineWidth(OpenGLManager.STROKE_W)
@@ -226,7 +227,7 @@ class OpenGLManager:
         glEnd()
         # Draw Point
         glTranslatef(p_0[0]+p_1[0], p_0[1]+p_1[1], p_0[2]+p_1[2])
-        glutSolidSphere(.005, self.sphere_slices, self.sphere_slices)
+        glutSolidSphere(.02, 6, 6)
         glPopMatrix()
 
     def draw_2d_graph(self, g_pos, g_size, g_scale, g_min, g_points, caption):

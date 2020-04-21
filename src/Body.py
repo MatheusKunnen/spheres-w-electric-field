@@ -35,7 +35,7 @@ class Body:
         d = self.norm_e(p_pos - self.b_pos)
         if d <= self.b_radius:
             return np.array([0., 0., 0.])
-        e = (p_pos - self.b_pos)/math.sqrt(d) # Versor do campo eletrico
+        e = np.array(p_pos - self.b_pos)/math.sqrt(d) # Versor do campo eletrico
         k = self.b_charge / d # Modulo do campo eletrico
         return e * k
 

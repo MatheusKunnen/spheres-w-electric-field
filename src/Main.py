@@ -1,7 +1,7 @@
 # @autor: Matheus Kunnen Ledesma - matheusl.2000@alunos.utfpr.edu.br
 
 import numpy as np
-from OpenGLManager import OpenGLManager
+
 
 import pygame
 from pygame.locals import *
@@ -10,9 +10,11 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
+from OpenGLManager import OpenGLManager
 from Body import Body
 from Ring import Ring
 from Graph import Graph
+from VectorField import VectorField
 
 import time
 import math
@@ -37,6 +39,7 @@ class Main:
         self.t_total = 0
         self.hud_enabled = True
         self.graphs_enabled = True
+        self.vector_field_enabled = False
 
         # Init Bodies
         self.init_bodies()
@@ -52,6 +55,9 @@ class Main:
 
         # Init Graphs
         self.init_graphs()
+
+        # Init Vector Field (Graphical R)
+        self.init_vector_field()
 
     def init_bodies(self):
         self.body = Body(1., .1, 1., np.array([0., 0., 0.]), np.array([0., 0., 4.]), -10)
@@ -74,11 +80,15 @@ class Main:
                             self.g_manager.display_size[1] - n*graphs_s[1] + n*graphs_offset[1]]))
 
         n += 1
-        self.graph_ace = Graph("Ace. [Z] (A x t)", ["t", "A"], 1000, 
+        self.graph_ace = Graph("Ace. [Z] (A x t)", ["t", "A"], n_points, 
                             np.array(graphs_s), 
                             np.array([self.g_manager.display_size[0] - graphs_s[0] - 10, 
                             self.g_manager.display_size[1] - n*graphs_s[1] - n*20]))
         
+    def init_vector_field(self):
+        self.v_field = VectorField([12., 12., 4.], [3., 3., 2.])
+        self.v_field.vectors_dir_l = []
+        self.update_vector_field()
 
     def run(self):
         self.is_running = self.g_manager.init_display()
@@ -99,6 +109,8 @@ class Main:
         self.draw_graphs()
         self.body.draw(self.g_manager, True)
         self.ring.draw(self.g_manager)
+        if self.vector_field_enabled:
+                self.v_field.draw(self.g_manager)
 
     def draw_graphs(self):
         if not self.graphs_enabled:
@@ -118,6 +130,17 @@ class Main:
         self.graph_vel.put(np.array([float(self.t_total), float(self.body.b_vel[2])]))
         self.graph_ace.put(np.array([float(self.t_total), float(self.body.b_aceleration[2])]))
         
+    def update_vector_field(self):
+        for pos in self.v_field.vectors_pos_l:
+            #e_vec = np.array(np.array(self.body.get_electric_field(pos))) # Only body E
+            e_vec = np.array(self.ring.get_electric_field(pos)) # Only ring E
+            # e_vec = np.array(self.ring.get_electric_field(pos)) + np.array(self.body.get_electric_field(pos)) # Body + Ring E
+            e_norm = math.sqrt(self.body.norm_e(e_vec))
+            if e_norm == 0:
+                self.v_field.vectors_dir_l.append(np.array([0., 0., 0.]))
+                continue
+            e_dir = e_vec / e_norm
+            self.v_field.vectors_dir_l.append(e_dir)
 
     def draw_hud(self):
         if not self.hud_enabled:
@@ -135,7 +158,9 @@ class Main:
             f"     P: {np.round(self.body.b_pos, 3)}",
             f"     V: {np.round(self.body.b_vel, 3)}",
             f"     A: {np.round(self.body.b_aceleration, 3)}",
-            f"  E(P): {np.round(self.E, 3)}", "",
+            f"  E(P): {np.round(self.E, 3)}",
+            f"     Q: {np.round(self.body.b_charge, 3)}", "",
+
             "-> Ring",
             f"     P: {np.round(self.ring.r_pos, 3)}",
             f"Radius: {round(self.ring.r_radius,3)}",
@@ -179,6 +204,8 @@ class Main:
                     self.rot_vector[0] = Main.ROT_K if event.type == pygame.KEYDOWN else 0.  
                 elif event.key == pygame.K_h and event.type == pygame.KEYDOWN:
                     self.hud_enabled = not self.hud_enabled
+                elif event.key == pygame.K_v and event.type == pygame.KEYDOWN:
+                    self.vector_field_enabled = not self.vector_field_enabled
                 elif event.key == pygame.K_PAGEUP and event.type == pygame.KEYDOWN:
                     self.dt_k += Main.DT_K
                 elif event.key == pygame.K_PAGEDOWN and event.type == pygame.KEYDOWN and round(self.dt_k - Main.DT_K,1) > 0:
