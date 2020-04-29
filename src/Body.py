@@ -32,7 +32,7 @@ class Body:
             g_manager.draw_vector(self.b_pos, self.b_vel)
 
     def get_electric_field(self, p_pos):
-        d = self.norm_e(p_pos - self.b_pos)
+        d = self.norm_e(np.array(p_pos - self.b_pos))
         if d <= self.b_radius:
             return np.array([0., 0., 0.])
         e = np.array(p_pos - self.b_pos)/math.sqrt(d) # Versor do campo eletrico

@@ -58,6 +58,10 @@ class Graph:
     # Updates scale factor for graph for each axis
     def update_scale(self):
         delta_v = self.max_v - self.min_v
+        if delta_v[0] == 0:
+            delta_v[0] = 1
+        if delta_v[1] == 0:
+            delta_v[1] = 1
         self.g_scale[0] = float(self.g_size[0])*Graph.SCALE_K/delta_v[0]
         self.g_scale[1] = float(self.g_size[1])*Graph.SCALE_K/delta_v[1]
         #print("MAX MIN DELTA SCALE", self.max_v, self.min_v, delta_v, self.g_scale)

@@ -1,15 +1,16 @@
-# @author: Matheus Kunnen Ledesma
+# @autor: Matheus Kunnen Ledesma - matheusl.2000@alunos.utfpr.edu.br
+
 import numpy as np
 
 class VectorField:
 
-    def __init__(self, size, dp):
+    def __init__(self, size, dp, color=[0., .5, .5, 1.]):
         self.size = np.round(size, 0)
         self.dp = np.array(dp)
         self.v_norm = 0.5
         self.vectors_pos_l = []
         self.vectors_dir_l = []
-        self.vector_color = np.array([0., .5, .5, 1.])
+        self.vector_color = np.array(color)
         self.init_vectors_pos()
 
     def init_vectors_pos(self):
