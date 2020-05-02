@@ -35,7 +35,7 @@ class Scene04:
         self.init_bodies()
         
         # Init Graphics Manager
-        self.g_manager = OpenGLManager("Sphere in a Electric Field | Scene 03 | By: Matheus Kunnen ")
+        self.g_manager = OpenGLManager("Sphere in a Electric Field | Scene 04 | By: Matheus Kunnen ")
         self.move_vector = np.array([0., 0., 0.])
         self.rot_vector = np.array([0., 0., 0.])
         self.cam_pos = np.array([0, 20, -5])
@@ -61,14 +61,10 @@ class Scene04:
         self.E = np.array([0., 0., 0.])
         self.F = (0., 0., 0.)
         # Init bodies
-        self.l_bodies.append(Body(2, .5, 1., np.array([4., 4., 4.]), np.array([0., 0., 0.]), Q))
-        self.l_bodies.append(Body(2, .5, 1., np.array([4., 4., -4.]), np.array([0., 0., 0.]), -Q))
-        self.l_bodies.append(Body(2, .5, 1., np.array([-4., -4., 4.]), np.array([0., 0., 0.]), Q))
-        self.l_bodies.append(Body(2, .5, 1., np.array([-4., -4., -4.]), np.array([0., 0., 0.]), -Q))
-        self.l_bodies.append(Body(2, .5, 1., np.array([4., -4., 4.]), np.array([0., 0., 0.]), -Q))
-        self.l_bodies.append(Body(2, .5, 1., np.array([4., -4., -4.]), np.array([0., 0., 0.]), Q))
-        self.l_bodies.append(Body(2, .5, 1., np.array([-4., 4., 4.]), np.array([0., 0., 0.]), -Q))
-        self.l_bodies.append(Body(2, .5, 1., np.array([-4., 4., -4.]), np.array([0., 0., 0.]), Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([4., 0., 4.]), np.array([0., 0., 0.]), Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([4., 0., -4.]), np.array([0., 0., 0.]), -Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([-4., 0., 4.]), np.array([0., 0., 0.]), -Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([-4., 0., -4.]), np.array([0., 0., 0.]), Q))
 
     def init_graphs(self):
         graphs_s = [600, 80]
@@ -92,7 +88,7 @@ class Scene04:
         
     def init_vector_field(self):
         print("Init Vector Field...Starting")
-        self.v_field = VectorField([6., 6., 8.], [2., 2., 2.])
+        self.v_field = VectorField([8., 4., 8.], [2., 2., 2.])
         self.v_field.vectors_dir_l = []
         self.update_vector_field()
         print("Init Vector Field...Finished")
@@ -104,7 +100,7 @@ class Scene04:
         for body in self.l_bodies:
             self.charge_lines.add_body(body)
         # Generate Lines
-        self.charge_lines.generate_lines()
+        self.charge_lines.generate_lines(min_e=0.0001)
 
     def dir(self, vec):
         return np.array(vec * 1. / np.linalg.norm(vec))

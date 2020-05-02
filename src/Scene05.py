@@ -13,7 +13,7 @@ from Graph import Graph
 from VectorField import VectorField
 from ChargeLines import ChargeLines
 
-class Scene03:
+class Scene05:
 
 
     def __init__(self):
@@ -35,7 +35,7 @@ class Scene03:
         self.init_bodies()
         
         # Init Graphics Manager
-        self.g_manager = OpenGLManager("Sphere in a Electric Field | Scene 03 | By: Matheus Kunnen ")
+        self.g_manager = OpenGLManager("Sphere in a Electric Field | Scene 05 | By: Matheus Kunnen ")
         self.move_vector = np.array([0., 0., 0.])
         self.rot_vector = np.array([0., 0., 0.])
         self.cam_pos = np.array([0, 20, -5])
@@ -61,10 +61,14 @@ class Scene03:
         self.E = np.array([0., 0., 0.])
         self.F = (0., 0., 0.)
         # Init bodies
-        self.body_1 = Body(1, .5, 1., np.array([.0, .0, 5.]), np.array([0., 0., 0.]), -Q)
-        self.body_2 = Body(2, .5, 1., np.array([.0, .0, -5.]), np.array([0., 0., 0.]), Q)
-        self.l_bodies.append(self.body_1)
-        self.l_bodies.append(self.body_2)
+        self.l_bodies.append(Body(2, .5, 1., np.array([4., 4., 4.]), np.array([0., 0., 0.]), Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([4., 4., -4.]), np.array([0., 0., 0.]), -Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([-4., -4., 4.]), np.array([0., 0., 0.]), Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([-4., -4., -4.]), np.array([0., 0., 0.]), -Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([4., -4., 4.]), np.array([0., 0., 0.]), -Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([4., -4., -4.]), np.array([0., 0., 0.]), Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([-4., 4., 4.]), np.array([0., 0., 0.]), -Q))
+        self.l_bodies.append(Body(2, .5, 1., np.array([-4., 4., -4.]), np.array([0., 0., 0.]), Q))
 
     def init_graphs(self):
         graphs_s = [600, 80]
@@ -100,7 +104,7 @@ class Scene03:
         for body in self.l_bodies:
             self.charge_lines.add_body(body)
         # Generate Lines
-        self.charge_lines.generate_lines()
+        self.charge_lines.generate_lines(min_e=0.0001)
 
     def dir(self, vec):
         return np.array(vec * 1. / np.linalg.norm(vec))
@@ -144,10 +148,9 @@ class Scene03:
         self.graph_f_z.draw(self.g_manager)
 
     def update(self):
-        e_1 = self.body_1.get_electric_field(self.controlled_body.b_pos)
-        e_2 = self.body_2.get_electric_field(self.controlled_body.b_pos)
-        #print("E_1", e_1, "E_2", e_2)
-        self.E =  e_1 + e_2
+        self.E = np.array([0., 0., 0.])
+        for body in self.l_bodies:
+            self.E += body.get_electric_field(self.controlled_body.b_pos)
         # self.controlled_body.b_aceleration = self.E * (self.controlled_body.b_charge/self.controlled_body.b_mass)
         self.F = self.E * self.controlled_body.b_charge
         # self.controlled_body.update(self.get_sim_dt())
@@ -163,7 +166,9 @@ class Scene03:
     def update_vector_field(self):
         print("Generating Vectors...")
         for pos in self.v_field.vectors_pos_l:
-            e_vec = np.array(self.body_1.get_electric_field(pos) + self.body_2.get_electric_field(pos)) # Only rings E
+            e_vec = np.array([0., 0., 0.])#np.array(self.body_1.get_electric_field(pos) + self.body_2.get_electric_field(pos)) # Only rings E
+            for body in self.l_bodies:
+                e_vec += body.get_electric_field(pos)
             e_norm = math.sqrt(self.controlled_body.norm_e(e_vec))
             if e_norm == 0:
                 self.v_field.vectors_dir_l.append(np.array([0., 0., 0.]))
@@ -192,15 +197,15 @@ class Scene03:
             # f"     V: {np.round(self.controlled_body.b_vel, 3)}",
             # f"     A: {np.round(self.controlled_body.b_aceleration, 3)}",
             f"  E(P): {np.round(self.E, 3)}",
-            f"     Q: {np.round(self.controlled_body.b_charge, 3)}", "",
-            "-> Body 1",
-            f"     P: {np.round(self.body_1.b_pos, 3)}",
-            f"Radius: {round(self.body_1.b_radius,3)}",
-            f"     Q: {round(self.body_1.b_charge,3)}", "",
-            "-> Body 2",
-            f"     P: {np.round(self.body_2.b_pos, 3)}",
-            f"Radius: {round(self.body_2.b_radius,3)}",
-            f"     Q: {round(self.body_2.b_charge,3)}",
+            f"     Q: {np.round(self.controlled_body.b_charge, 3)}", ""
+            # "-> Body 1",
+            # f"     P: {np.round(self.body_1.b_pos, 3)}",
+            # f"Radius: {round(self.body_1.b_radius,3)}",
+            # f"     Q: {round(self.body_1.b_charge,3)}", "",
+            # "-> Body 2",
+            # f"     P: {np.round(self.body_2.b_pos, 3)}",
+            # f"Radius: {round(self.body_2.b_radius,3)}",
+            # f"     Q: {round(self.body_2.b_charge,3)}",
             ]
         self.g_manager.draw_captions()
 
