@@ -3,17 +3,17 @@
 import numpy as np
 import time
 import math
-
+import concurrent.futures
 import pygame
 
 from Consts import Consts
 from OpenGLManager import OpenGLManager
 from Body import Body
-from Ring import Ring
 from Graph import Graph
 from VectorField import VectorField
+from ChargeLines import ChargeLines
 
-class Scene01:
+class Scene03:
 
 
     def __init__(self):
@@ -25,15 +25,17 @@ class Scene01:
         self.dt_k = 1.
         self.target_dt = 1/30.0
         self.t_total = 0
+        self.controlled_body_enabled = False
         self.hud_enabled = True
         self.graphs_enabled = False
-        self.vector_field_enabled = True
+        self.vector_field_enabled = False
+        self.line_charges_enabled = True
 
         # Init Bodies
         self.init_bodies()
         
         # Init Graphics Manager
-        self.g_manager = OpenGLManager("Sphere in a Electric Field | Scene 01 | By: Matheus Kunnen ")
+        self.g_manager = OpenGLManager("Sphere in a Electric Field | Scene 03: Lines of Charge | By: Matheus Kunnen ")
         self.move_vector = np.array([0., 0., 0.])
         self.rot_vector = np.array([0., 0., 0.])
         self.cam_pos = np.array([0, 20, -5])
@@ -47,11 +49,22 @@ class Scene01:
         # Init Vector Field (Graphical R)
         self.init_vector_field()
 
+        # Init charge lines
+        self.init_charge_lines()
+
     def init_bodies(self):
-        self.body = Body(1., .1, 1., np.array([0., 0., 0.]), np.array([0., 0., .0]), -10)
-        self.ring = Ring(np.array([0, 0, 0]), 10, 320)
+        Q = 1000
+        self.l_bodies = []
+        # Body(self, b_id, b_radius, b_mass, b_pos, b_vel, b_charge):
+        # Init controlled body
+        self.controlled_body = Body(0, 0.01, 1., np.array([.0, .0, 0.]), np.array([0., 0., 0.]), Q * 0.01)
         self.E = np.array([0., 0., 0.])
         self.F = (0., 0., 0.)
+        # Init bodies
+        self.body_1 = Body(1, .5, 1., np.array([.0, .0, 5.]), np.array([0., 0., 0.]), Q)
+        self.body_2 = Body(2, .5, 1., np.array([.0, .0, -5.]), np.array([0., 0., 0.]), Q)
+        self.l_bodies.append(self.body_1)
+        self.l_bodies.append(self.body_2)
 
     def init_graphs(self):
         graphs_s = [600, 80]
@@ -67,7 +80,6 @@ class Scene01:
                             np.array(graphs_s), 
                             np.array([self.g_manager.display_size[0] - graphs_s[0] + graphs_offset[0], 
                             self.g_manager.display_size[1] - n*graphs_s[1] + n*graphs_offset[1]]))
-
         n += 1
         self.graph_f_z = Graph("Fz x t", ["t", "Fz"], n_points, 
                             np.array(graphs_s), 
@@ -75,10 +87,26 @@ class Scene01:
                             self.g_manager.display_size[1] - n*graphs_s[1] - n*20]))
         
     def init_vector_field(self):
-        self.v_field = VectorField([12., 12., 6.], [2., 2., 2.])
+        print("Init Vector Field...Starting")
+        self.v_field = VectorField([2., 2., 2.], [2., 2., 2.])
         self.v_field.vectors_dir_l = []
         self.update_vector_field()
+        self.line_field = []
+        self.line_field.append(np.array([1., .0, 7.5]))
+        print("Init Vector Field...Finished")
 
+    def init_charge_lines(self):
+        # Create charge line obj
+        self.charge_lines = ChargeLines(16., 10000, .1)
+        # Add bodies
+        for body in self.l_bodies:
+            self.charge_lines.add_body(body)
+        # Generate Lines
+        self.charge_lines.generate_lines()
+
+    def dir(self, vec):
+        return np.array(vec * 1. / np.linalg.norm(vec))
+        
     def run(self):
         self.is_running = self.g_manager.init_display()
         self.t_total = 0
@@ -96,11 +124,19 @@ class Scene01:
     def draw(self):
         self.draw_hud()
         self.draw_graphs()
-        self.body.draw(self.g_manager, True)
-        self.g_manager.draw_vector(self.body.b_pos, self.F, [1., 0., .8, 1.]) # Forca sobre a particula
-        self.ring.draw(self.g_manager)
+        self.draw_bodies()
         if self.vector_field_enabled:
             self.v_field.draw(self.g_manager)
+        if self.line_charges_enabled:
+            self.charge_lines.draw(self.g_manager)
+
+    def draw_bodies(self):
+        for body in self.l_bodies:
+            body.draw(self.g_manager)
+        if self.controlled_body_enabled:
+            self.controlled_body.draw(self.g_manager, True)
+            # Draw force vector
+            self.g_manager.draw_vector(self.controlled_body.b_pos, self.F, [1., 0., .8, 1.]) 
 
     def draw_graphs(self):
         if not self.graphs_enabled:
@@ -110,31 +146,36 @@ class Scene01:
         self.graph_f_z.draw(self.g_manager)
 
     def update(self):
-        self.E = self.ring.get_electric_field(self.body.b_pos)
-        self.F = self.E * self.body.b_charge
-        # self.body.b_aceleration = self.E * (self.body.b_charge/self.body.b_mass)
-        # self.body.update(self.get_sim_dt())
-        self.body.update(self.dt*self.dt_k)
+        e_1 = self.body_1.get_electric_field(self.controlled_body.b_pos)
+        e_2 = self.body_2.get_electric_field(self.controlled_body.b_pos)
+        #print("E_1", e_1, "E_2", e_2)
+        self.E =  e_1 + e_2
+        # self.controlled_body.b_aceleration = self.E * (self.controlled_body.b_charge/self.controlled_body.b_mass)
+        self.F = self.E * self.controlled_body.b_charge
+        # self.controlled_body.update(self.get_sim_dt())
+        self.controlled_body.update(self.dt*self.dt_k)
         self.update_graphs()
     
     def update_graphs(self):
-        self.graph_f_x.put(np.array([float(self.t_total), float(self.F[0])]))# float(self.body.b_pos[2])]))
-        self.graph_f_y.put(np.array([float(self.t_total), float(self.F[1])]))# loat(self.body.b_vel[2])]))
-        self.graph_f_z.put(np.array([float(self.t_total), float(self.F[2])]))# float(self.body.b_aceleration[2])]))
+        self.graph_f_x.put(np.array([float(self.t_total), float(self.F[0])]))# float(self.controlled_body.b_pos[2])]))
+        self.graph_f_y.put(np.array([float(self.t_total), float(self.F[1])]))# loat(self.controlled_body.b_vel[2])]))
+        self.graph_f_z.put(np.array([float(self.t_total), float(self.F[2])]))# float(self.controlled_body.b_aceleration[2])]))
+        
         
     def update_vector_field(self):
         print("Generating Vectors...")
         for pos in self.v_field.vectors_pos_l:
-            #e_vec = np.array(np.array(self.body.get_electric_field(pos))) # Only body E
-            e_vec = np.array(self.ring.get_electric_field(pos)) # Only ring E
-            # e_vec = np.array(self.ring.get_electric_field(pos)) + np.array(self.body.get_electric_field(pos)) # Body + Ring E
-            e_norm = math.sqrt(self.body.norm_e(e_vec))
+            e_vec = np.array(self.body_1.get_electric_field(pos) + self.body_2.get_electric_field(pos)) # Only rings E
+            e_norm = math.sqrt(self.controlled_body.norm_e(e_vec))
             if e_norm == 0:
                 self.v_field.vectors_dir_l.append(np.array([0., 0., 0.]))
-                continue
-            e_dir = e_vec / e_norm
-            self.v_field.vectors_dir_l.append(e_dir)
+                # continue
+            else:
+                e_dir = e_vec / e_norm
+                self.v_field.vectors_dir_l.append(e_dir)
         print(len(self.v_field.vectors_pos_l), "Vectors Generated...")
+    
+            
 
     def draw_hud(self):
         if not self.hud_enabled:
@@ -142,24 +183,27 @@ class Scene01:
         txt_status = "Paused" if self.is_paused else "Running"
         self.g_manager.captions = [
             "-> General Parameters",
-            f"    FPS: {round(1/self.dt, 0)}",
+            f"    FPS: {round(1/self.dt,0)}",
             f"Runtime: {round(self.t_total, 3)}s.",
             f"   Play: x{round(self.dt_k,1)}",
             f"Cam. dP: {np.round(self.cam_pos, 2)}",
             f"Cam. dR: {np.round(self.cam_rot, 2)}",
             f" Status: {txt_status}", "",
-            "-> Central Body ",
-            f"     P: {np.round(self.body.b_pos, 3)}",
-            f"     V: {np.round(self.body.b_vel, 3)}",
-            f"     A: {np.round(self.body.b_aceleration, 3)}",
+            "-> Controlled Body ",
+            f"     P: {np.round(self.controlled_body.b_pos, 3)}",
+            # f"     V: {np.round(self.controlled_body.b_vel, 3)}",
+            # f"     A: {np.round(self.controlled_body.b_aceleration, 3)}",
             f"  E(P): {np.round(self.E, 3)}",
-            f"     Q: {np.round(self.body.b_charge, 3)}", "",
-            "-> Ring",
-            f"     P: {np.round(self.ring.r_pos, 3)}",
-            f"Radius: {round(self.ring.r_radius,3)}",
-            f"     Q: {round(self.ring.r_charge,3)}",
-            f"N. Sph: {round(self.ring.n_bodies,3)}",
-            f" Q Sph: {round(self.ring.q_bodies,3)}"]
+            f"     Q: {np.round(self.controlled_body.b_charge, 3)}", "",
+            "-> Body 1",
+            f"     P: {np.round(self.body_1.b_pos, 3)}",
+            f"Radius: {round(self.body_1.b_radius,3)}",
+            f"     Q: {round(self.body_1.b_charge,3)}", "",
+            "-> Body 2",
+            f"     P: {np.round(self.body_2.b_pos, 3)}",
+            f"Radius: {round(self.body_2.b_radius,3)}",
+            f"     Q: {round(self.body_2.b_charge,3)}",
+            ]
         self.g_manager.draw_captions()
 
     def update_dt(self, t1, t2):
@@ -208,9 +252,10 @@ class Scene01:
                     self.is_paused = not self.is_paused
                 elif event.key == pygame.K_g and event.type == pygame.KEYDOWN:
                     self.graphs_enabled = not self.graphs_enabled
-                elif event.key == pygame.K_u and event.type == pygame.KEYDOWN:
-                    self.is_paused = True
-                    self.update_vector_field()
+                elif event.key == pygame.K_l and event.type == pygame.KEYDOWN:
+                    self.line_charges_enabled = not self.line_charges_enabled
+                elif event.key == pygame.K_b and event.type == pygame.KEYDOWN:
+                    self.controlled_body_enabled = not self.controlled_body_enabled
             if event.type == pygame.QUIT:
                 is_running = False
                 pygame.quit()
@@ -223,4 +268,4 @@ class Scene01:
             self.g_manager.move_cam(self.move_vector)
             self.g_manager.rotate_cam(self.rot_vector)
         else:
-            self.body.b_pos = self.body.b_pos + self.move_vector 
+            self.controlled_body.b_pos = self.controlled_body.b_pos + self.move_vector 

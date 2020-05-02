@@ -9,6 +9,7 @@ class Body:
     K_C = 8.9875517873681764e9
     COLOR_RED = [.5, .01, .01, 1.0]
     COLOR_BLUE = [.01, .01, .5, 1.0]
+    COLOR_GREY = [.3, .3, .3, 1.0]
 
     def __init__(self, b_id, b_radius, b_mass, b_pos, b_vel, b_charge):
         self.b_id = b_id
@@ -17,7 +18,10 @@ class Body:
         self.b_pos = b_pos
         self.b_vel = b_vel
         self.b_charge = b_charge
-        self.b_color = Body.COLOR_RED if self.b_charge > 0 else Body.COLOR_BLUE
+        if b_charge != 0:
+            self.b_color = Body.COLOR_RED if self.b_charge > 0 else Body.COLOR_BLUE
+        else:
+            self.b_color = Body.COLOR_GREY
         self.b_aceleration = np.array([0., 0., 0.])
 
     def update(self, dt):
@@ -38,6 +42,28 @@ class Body:
         e = np.array(p_pos - self.b_pos)/math.sqrt(d) # Versor do campo eletrico
         k = self.b_charge / d # Modulo do campo eletrico
         return e * k
+
+    def get_charge_lines_init(self, k_radius=1.5, k_lines = 1.):
+        points = []
+        d_theta = math.pi / (4 * k_lines)
+        d_phi =  math.pi / (4 * k_lines *2.)
+        d = self.b_radius*k_radius
+        theta = 0.
+        while theta < 2. * math.pi:
+            phi = 0
+            while phi < math.pi:
+                points.append([self.b_pos[0] + d * math.cos(theta) * math.sin(phi), 
+                               self.b_pos[1] + d * math.sin(theta) * math.sin(phi),
+                               self.b_pos[2] + d * math.cos(phi)])
+                phi += d_phi
+            points.append([self.b_pos[0], self.b_pos[1],
+                               self.b_pos[2] + d])
+            theta += d_theta
+        return points
+
+    def is_inside(self, pos, radius_k = 1.):
+        d = self.norm_e(self.b_pos - pos)
+        return d < (self.b_radius * radius_k)**2
 
     def norm_e(self, v):
         return (math.pow(v[0], 2) + pow(v[1], 2) + pow(v[2], 2))

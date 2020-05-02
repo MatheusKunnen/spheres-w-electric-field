@@ -198,6 +198,8 @@ class OpenGLManager:
                      sphere_ambient_color[1]*K,
                      sphere_ambient_color[2]*K,
                      1])
+        glMaterialfv(GL_FRONT, GL_SHININESS, 5)
+
         glMaterialfv(GL_FRONT, GL_SPECULAR, self.sphere_specular_color)
         glTranslatef(sphere_pos[0], sphere_pos[1], sphere_pos[2])
         glutSolidSphere(sphere_radius, self.sphere_slices, self.sphere_slices)
@@ -223,11 +225,28 @@ class OpenGLManager:
         # Draw Stroke
         glBegin(GL_LINES)
         glVertex3f(p_0[0], p_0[1], p_0[2])
+        # glVertex3f(p_1[0], p_1[1], p_1[2])
         glVertex3f(p_0[0]+p_1[0], p_0[1]+p_1[1], p_0[2]+p_1[2])
         glEnd()
         # Draw Point
         glTranslatef(p_0[0]+p_1[0], p_0[1]+p_1[1], p_0[2]+p_1[2])
         glutSolidSphere(.02, 6, 6)
+        glPopMatrix()
+
+    def draw_line(self, points, line_width=0, color=None):
+        if color is None:
+            color = self.p_color
+        glPushMatrix()
+        # Config stroke
+        glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color)
+        glEnable(GL_BLEND)
+        glEnable(GL_LINE_SMOOTH)
+        glLineWidth(OpenGLManager.STROKE_W)
+        # Draw Stroke
+        glBegin(GL_LINE_STRIP_ADJACENCY)
+        for point in points:
+            glVertex3f(point[0], point[1], point[2])
+        glEnd()
         glPopMatrix()
 
     def draw_2d_graph(self, g_pos, g_size, g_scale, g_min, g_points, caption):

@@ -4,13 +4,14 @@ from sys import argv
 
 from Scene01 import Scene01
 from Scene02 import Scene02
+from Scene03 import Scene03
 
 class Main:
     
-
     # Scenes
     SCENE_01 = 1
     SCENE_02 = 2
+    SCENE_03 = 3
 
     def __init__(self, scene_id = 1):
         self.scene = None
@@ -18,6 +19,8 @@ class Main:
             self.scene = Scene01()
         elif scene_id == Main.SCENE_02:
             self.scene = Scene02()
+        elif scene_id == Main.SCENE_03:
+            self.scene = Scene03()
 
         if self.scene is None:
             print("Invalid Scene!")
