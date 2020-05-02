@@ -13,14 +13,11 @@ class ChargeLines:
         self.l_bodies = []
         self.l_lines = []
 
-    def generate_lines(self, min_e =0.0005):
+    def generate_lines(self, min_e=0.000001):
         print("Generate Lines...Starting")
-        min = 1.
         # Reset variables
         self.l_lines = []
         init_points = []
-        # init_points.append(np.array([0. , 0., .2]))
-        # init_points.append(np.array([1. , .0, .5]))
         # Generate start points for the lines
         for body in self.l_bodies:
             # Using only positive charges to avoid generating redundant lines
@@ -39,15 +36,13 @@ class ChargeLines:
                 # Calculate de electric field
                 for body in self.l_bodies:
                     p +=  body.get_electric_field(line[i])
-                # p = np.round(p, 10)
+                # p = np.round(p, 5)
                 # Stops if electric field gets too weak
-                if self.norm_2(p) < min:
-                    min = self.norm_2(p)
                 if self.norm_2(p) < min_e:
                     break
                 # Get direction of the electric field & adjust its length
                 p = self.dir(p) * self.k_line
-                print(p) # DEBUG
+                # print(p) # DEBUG
                 # Add point to line
                 line.append(line[i] + p)
                 i += 1
@@ -61,9 +56,8 @@ class ChargeLines:
                             break
             # Add line to lines list
             self.l_lines.append(line)
-            print("MIN", min)
-            print(len(self.l_lines), "lines generated.")
-            print("Generate Lines...Finished")
+        print(len(self.l_lines), "lines generated...")
+        print("Generate Lines...Finished")
 
     def draw(self, g_manager):
         for line in self.l_lines:
