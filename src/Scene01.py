@@ -6,12 +6,14 @@ import math
 
 import pygame
 
+from VectorUtils import VectorUtils
 from Consts import Consts
 from OpenGLManager import OpenGLManager
 from Body import Body
 from Ring import Ring
 from Graph import Graph
 from VectorField import VectorField
+from PlaneVectorField import PlaneVectorField
 
 class Scene01:
 
@@ -75,9 +77,8 @@ class Scene01:
                             self.g_manager.display_size[1] - n*graphs_s[1] - n*20]))
         
     def init_vector_field(self):
-        self.v_field = VectorField([12., 12., 6.], [2., 2., 2.])
-        self.v_field.vectors_dir_l = []
-        self.update_vector_field()
+        self.v_field = VectorField([12., 12., 6.], [1., 1., .5], l_bodies=self.ring.bodies_v)
+        self.v_field.update_vectors()
 
     def run(self):
         self.is_running = self.g_manager.init_display()
@@ -112,29 +113,13 @@ class Scene01:
     def update(self):
         self.E = self.ring.get_electric_field(self.body.b_pos)
         self.F = self.E * self.body.b_charge
-        # self.body.b_aceleration = self.E * (self.body.b_charge/self.body.b_mass)
-        # self.body.update(self.get_sim_dt())
         self.body.update(self.dt*self.dt_k)
         self.update_graphs()
     
     def update_graphs(self):
-        self.graph_f_x.put(np.array([float(self.t_total), float(self.F[0])]))# float(self.body.b_pos[2])]))
-        self.graph_f_y.put(np.array([float(self.t_total), float(self.F[1])]))# loat(self.body.b_vel[2])]))
-        self.graph_f_z.put(np.array([float(self.t_total), float(self.F[2])]))# float(self.body.b_aceleration[2])]))
-        
-    def update_vector_field(self):
-        print("Generating Vectors...")
-        for pos in self.v_field.vectors_pos_l:
-            #e_vec = np.array(np.array(self.body.get_electric_field(pos))) # Only body E
-            e_vec = np.array(self.ring.get_electric_field(pos)) # Only ring E
-            # e_vec = np.array(self.ring.get_electric_field(pos)) + np.array(self.body.get_electric_field(pos)) # Body + Ring E
-            e_norm = math.sqrt(self.body.norm_e(e_vec))
-            if e_norm == 0:
-                self.v_field.vectors_dir_l.append(np.array([0., 0., 0.]))
-                continue
-            e_dir = e_vec / e_norm
-            self.v_field.vectors_dir_l.append(e_dir)
-        print(len(self.v_field.vectors_pos_l), "Vectors Generated...")
+        self.graph_f_x.put(np.array([float(self.t_total), float(self.F[0])]))
+        self.graph_f_y.put(np.array([float(self.t_total), float(self.F[1])]))
+        self.graph_f_z.put(np.array([float(self.t_total), float(self.F[2])]))
 
     def draw_hud(self):
         if not self.hud_enabled:
@@ -208,9 +193,12 @@ class Scene01:
                     self.is_paused = not self.is_paused
                 elif event.key == pygame.K_g and event.type == pygame.KEYDOWN:
                     self.graphs_enabled = not self.graphs_enabled
-                elif event.key == pygame.K_u and event.type == pygame.KEYDOWN:
-                    self.is_paused = True
-                    self.update_vector_field()
+                elif event.key == pygame.K_b and event.type == pygame.KEYDOWN:
+                    self.v_field.set_draw_control(not self.v_field.draw_control)
+                elif event.key == pygame.K_k and event.type == pygame.KEYDOWN:
+                    self.v_field.move_draw_plane(1.)
+                elif event.key == pygame.K_m and event.type == pygame.KEYDOWN:
+                    self.v_field.move_draw_plane(-1.)
             if event.type == pygame.QUIT:
                 is_running = False
                 pygame.quit()

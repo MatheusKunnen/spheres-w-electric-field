@@ -88,7 +88,7 @@ class Scene03:
         
     def init_vector_field(self):
         print("Init Vector Field...Starting")
-        self.v_field = VectorField([10., 10., 10.], [2., 2., 2.])
+        self.v_field = VectorField([10., 10., 10.], [1., 1., 1.], l_bodies=[self.body_1, self.body_2])
         self.v_field.vectors_dir_l = []
         self.update_vector_field()
         print("Init Vector Field...Finished")
@@ -254,6 +254,12 @@ class Scene03:
                     self.line_charges_enabled = not self.line_charges_enabled
                 elif event.key == pygame.K_b and event.type == pygame.KEYDOWN:
                     self.controlled_body_enabled = not self.controlled_body_enabled
+                elif event.key == pygame.K_b and event.type == pygame.KEYDOWN:
+                    self.v_field.set_draw_control(not self.v_field.draw_control)
+                elif event.key == pygame.K_k and event.type == pygame.KEYDOWN:
+                    self.v_field.move_draw_plane(1.)
+                elif event.key == pygame.K_m and event.type == pygame.KEYDOWN:
+                    self.v_field.move_draw_plane(-1.)
             if event.type == pygame.QUIT:
                 is_running = False
                 pygame.quit()

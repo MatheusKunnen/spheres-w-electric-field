@@ -88,7 +88,7 @@ class Scene04:
         
     def init_vector_field(self):
         print("Init Vector Field...Starting")
-        self.v_field = VectorField([8., 4., 8.], [2., 2., 2.])
+        self.v_field = VectorField([8., 8., 8.], [1., 1., .5], l_bodies=self.l_bodies)
         self.v_field.vectors_dir_l = []
         self.update_vector_field()
         print("Init Vector Field...Finished")
@@ -101,9 +101,6 @@ class Scene04:
             self.charge_lines.add_body(body)
         # Generate Lines
         self.charge_lines.generate_lines(min_e=0.0001)
-
-    def dir(self, vec):
-        return np.array(vec * 1. / np.linalg.norm(vec))
         
     def run(self):
         self.is_running = self.g_manager.init_display()
@@ -154,15 +151,15 @@ class Scene04:
         self.update_graphs()
     
     def update_graphs(self):
-        self.graph_f_x.put(np.array([float(self.t_total), float(self.F[0])]))# float(self.controlled_body.b_pos[2])]))
-        self.graph_f_y.put(np.array([float(self.t_total), float(self.F[1])]))# loat(self.controlled_body.b_vel[2])]))
-        self.graph_f_z.put(np.array([float(self.t_total), float(self.F[2])]))# float(self.controlled_body.b_aceleration[2])]))
+        self.graph_f_x.put(np.array([float(self.t_total), float(self.F[0])]))
+        self.graph_f_y.put(np.array([float(self.t_total), float(self.F[1])]))
+        self.graph_f_z.put(np.array([float(self.t_total), float(self.F[2])]))
         
         
     def update_vector_field(self):
         print("Generating Vectors...")
         for pos in self.v_field.vectors_pos_l:
-            e_vec = np.array([0., 0., 0.])#np.array(self.body_1.get_electric_field(pos) + self.body_2.get_electric_field(pos)) # Only rings E
+            e_vec = np.array([0., 0., 0.])
             for body in self.l_bodies:
                 e_vec += body.get_electric_field(pos)
             e_norm = math.sqrt(self.controlled_body.norm_e(e_vec))
@@ -255,6 +252,12 @@ class Scene04:
                     self.line_charges_enabled = not self.line_charges_enabled
                 elif event.key == pygame.K_b and event.type == pygame.KEYDOWN:
                     self.controlled_body_enabled = not self.controlled_body_enabled
+                elif event.key == pygame.K_b and event.type == pygame.KEYDOWN:
+                    self.v_field.set_draw_control(not self.v_field.draw_control)
+                elif event.key == pygame.K_k and event.type == pygame.KEYDOWN:
+                    self.v_field.move_draw_plane(1.)
+                elif event.key == pygame.K_m and event.type == pygame.KEYDOWN:
+                    self.v_field.move_draw_plane(-1.)
             if event.type == pygame.QUIT:
                 is_running = False
                 pygame.quit()

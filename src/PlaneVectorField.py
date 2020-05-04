@@ -3,19 +3,17 @@
 import numpy as np
 from VectorUtils import VectorUtils
 
-class VectorField:
+class PlaneVectorField:
 
-    def __init__(self, size, dp, l_bodies, color=[.5, .45, .45, 1.]):
-        self.size = np.round(size, 0)
-        self.dp = np.array(dp)
-        self.v_norm = 0.5
+    DEFAULT_V_COLOR = np.array([.8, .8, .8, 1.])
+
+    def __init__(self, size, dp, l_bodies, color = None):
+        self.size = size
+        self.dp = dp
         self.l_bodies = l_bodies
-        self.draw_control = True
-        self.draw_plane = size[2]
-        self.vectors_pos_l = []
-        self.vectors_dir_l = []
-        self.vector_color = np.array(color)
+        self.color = np.array(color) if color is not None else PlaneVectorField.DEFAULT_V_COLOR
         self.init_vectors_pos()
+        self.update_vectors()
 
     def init_vectors_pos(self):
         self.vectors_pos_l = []
@@ -31,8 +29,7 @@ class VectorField:
                     z += self.dp[2]
                 y += self.dp[1]
             x += self.dp[0]
-        # print("VECTORS LEN ", len(self.vectors_pos_l))
-        
+    
     def update_vectors(self):
         print("Generating Vectors...")
         self.vectors_dir_l = []
@@ -44,27 +41,21 @@ class VectorField:
                 e_vec += body.get_electric_field(point)
             e_norm = VectorUtils.norm(e_vec)
             # Checks if the field is not 0
-            if np.round(e_norm, 15) == 0:
+            if e_norm == 0:
                 self.vectors_dir_l.append(np.array([0., 0., 0.]))
             else:
                 e_dir = e_vec / e_norm
                 self.vectors_dir_l.append(e_dir)
         print(len(self.vectors_pos_l), "Vectors Generated...")
 
-    def set_draw_control(self, draw_control):
-        self.draw_control = draw_control
-
-    def move_draw_plane(self, dp):
-        if dp > 0:
-            self.draw_plane += self.dp[2]
-        else:
-            self.draw_plane -= self.dp[2]
+    def move(self, dir, update_vectors=True):
+        self.pos += dir
+        self.init_vectors_pos()
+        if update_vectors:
+            self.update_vectors()
 
     def draw(self, g_manager):
-        if not self.draw_control:
-            for v_pos, v_dir in zip(self.vectors_pos_l, self.vectors_dir_l):
-                g_manager.draw_vector(v_pos, v_dir, self.vector_color)
-        else:
-            for v_pos, v_dir in zip(self.vectors_pos_l, self.vectors_dir_l):
-                if v_pos[2] == self.draw_plane:
-                    g_manager.draw_vector(v_pos, v_dir, self.vector_color)
+        for v_pos, v_dir in zip(self.vectors_pos_l, self.vectors_dir_l):
+            g_manager.draw_vector(v_pos, v_dir, self.color)
+
+
