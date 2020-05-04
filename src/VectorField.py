@@ -5,7 +5,9 @@ from VectorUtils import VectorUtils
 
 class VectorField:
 
-    def __init__(self, size, dp, l_bodies, color=[.5, .45, .45, 1.]):
+    K_VECTOR = 0.5
+
+    def __init__(self, size, dp, l_bodies, color=[.75, .5, .05, 1.]):
         self.size = np.round(size, 0)
         self.dp = np.array(dp)
         self.v_norm = 0.5
@@ -48,7 +50,7 @@ class VectorField:
                 self.vectors_dir_l.append(np.array([0., 0., 0.]))
             else:
                 e_dir = e_vec / e_norm
-                self.vectors_dir_l.append(e_dir)
+                self.vectors_dir_l.append(e_dir * VectorField.K_VECTOR)
         print(len(self.vectors_pos_l), "Vectors Generated...")
 
     def set_draw_control(self, draw_control):

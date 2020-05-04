@@ -62,7 +62,7 @@ class Scene03:
         self.F = (0., 0., 0.)
         # Init bodies
         self.body_1 = Body(1, .5, 1., np.array([.0, .0, 5.]), np.array([0., 0., 0.]), -Q)
-        self.body_2 = Body(2, .5, 1., np.array([.0, .0, -5.]), np.array([0., 0., 0.]), Q)
+        self.body_2 = Body(2, .5, 1., np.array([.0, .0, -5.]), np.array([0., 0., 0.]), 1.5*Q)
         self.l_bodies.append(self.body_1)
         self.l_bodies.append(self.body_2)
 

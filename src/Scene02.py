@@ -48,7 +48,7 @@ class Scene02:
         self.init_vector_field()
 
     def init_bodies(self):
-        self.body = Body(1., .1, 1., np.array([.0, .0, 3.0]), np.array([0., 0., 0.]), 10)
+        self.body = Body(1., .1, 1., np.array([.0, .0, .0]), np.array([0., 0., 0.]), 10)
         self.ring_1 = Ring(np.array([0, 0, 10]), 10, 320)
         self.ring_2 = Ring(np.array([0, 0, -10]), 10, 320)
         self.E = np.array([0., 0., 0.])
