@@ -1,9 +1,13 @@
+# @autor: Matheus Kunnen Ledesma - matheusl.2000@alunos.utfpr.edu.br
 
 import numpy as np
 import math
+
+from VectorUtils import VectorUtils
+
 class ChargeLines:
 
-    DEFAULT_K_LINE = .5
+    DEFAULT_K_LINE = .25
     K_RADIUS = 1.5
 
     def __init__(self, max_distance, max_iterations, k_line = None):
@@ -36,12 +40,16 @@ class ChargeLines:
                 # Calculate de electric field
                 for body in self.l_bodies:
                     p +=  body.get_electric_field(line[i])
-                # p = np.round(p, 5)
+                # Round to remove artifacts of too small numbers
+                p = np.round(p, 15)
+                norm = VectorUtils.norm(p)
                 # Stops if electric field gets too weak
-                if self.norm_2(p) < min_e:
+                if norm < min_e:
                     break
                 # Get direction of the electric field & adjust its length
-                p = self.dir(p) * self.k_line
+                if norm > self.k_line:
+                    p = self.dir(p) * self.k_line
+
                 # print(p) # DEBUG
                 # Add point to line
                 line.append(line[i] + p)

@@ -99,7 +99,7 @@ class Scene05:
 
     def init_charge_lines(self):
         # Create charge line obj
-        self.charge_lines = ChargeLines(160., 10000, .1)
+        self.charge_lines = ChargeLines(30., 10000, .1)
         # Add bodies
         for body in self.l_bodies:
             self.charge_lines.add_body(body)
