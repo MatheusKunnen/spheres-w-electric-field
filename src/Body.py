@@ -43,7 +43,8 @@ class Body:
         k = self.b_charge / d # Modulo do campo eletrico
         return e * k
 
-    def get_charge_lines_init(self, k_radius=1.5, k_lines=[1., 1.]):
+    def get_field_lines_init(self, k_radius=1.5, k_lines=None):
+        k_lines = k_lines if k_lines is not None else [1., 1.]
         points = []
         d_theta = math.pi / (4 * k_lines[0])
         d_phi =  math.pi / (4 * k_lines[1])

@@ -11,7 +11,7 @@ from OpenGLManager import OpenGLManager
 from Body import Body
 from Graph import Graph
 from VectorField import VectorField
-from ChargeLines import ChargeLines
+from FieldLines import FieldLines
 
 class Scene05:
 
@@ -50,10 +50,10 @@ class Scene05:
         self.init_vector_field()
 
         # Init charge lines
-        self.init_charge_lines()
+        self.init_field_lines()
 
     def init_bodies(self):
-        Q = 100
+        Q = 10
         self.l_bodies = []
         # Body(self, b_id, b_radius, b_mass, b_pos, b_vel, b_charge):
         # Init controlled body
@@ -97,14 +97,14 @@ class Scene05:
         self.update_vector_field()
         print("Init Vector Field...Finished")
 
-    def init_charge_lines(self):
+    def init_field_lines(self):
         # Create charge line obj
-        self.charge_lines = ChargeLines(30., 10000, .1)
+        self.field_lines = FieldLines(30., 10000, .1, [1., 1.])
         # Add bodies
         for body in self.l_bodies:
-            self.charge_lines.add_body(body)
+            self.field_lines.add_body(body)
         # Generate Lines
-        self.charge_lines.generate_lines(min_e=0.0001)
+        self.field_lines.generate_lines(min_e=0.0001)
 
     def dir(self, vec):
         return np.array(vec * 1. / np.linalg.norm(vec))
@@ -130,7 +130,7 @@ class Scene05:
         if self.vector_field_enabled:
             self.v_field.draw(self.g_manager)
         if self.line_charges_enabled:
-            self.charge_lines.draw(self.g_manager)
+            self.field_lines.draw(self.g_manager)
 
     def draw_bodies(self):
         for body in self.l_bodies:

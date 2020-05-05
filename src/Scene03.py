@@ -11,7 +11,7 @@ from OpenGLManager import OpenGLManager
 from Body import Body
 from Graph import Graph
 from VectorField import VectorField
-from ChargeLines import ChargeLines
+from FieldLines import FieldLines
 
 class Scene03:
 
@@ -50,7 +50,7 @@ class Scene03:
         self.init_vector_field()
 
         # Init charge lines
-        self.init_charge_lines()
+        self.init_field_lines()
 
     def init_bodies(self):
         Q = 100
@@ -61,8 +61,8 @@ class Scene03:
         self.E = np.array([0., 0., 0.])
         self.F = (0., 0., 0.)
         # Init bodies
-        self.body_1 = Body(1, .5, 1., np.array([.0, .0, 5.]), np.array([0., 0., 0.]), -Q)
-        self.body_2 = Body(2, .5, 1., np.array([.0, .0, -5.]), np.array([0., 0., 0.]), 1.5*Q)
+        self.body_1 = Body(1, .5, 1., np.array([.0, .0, 5.]), np.array([0., 0., 0.]), 2*Q)
+        self.body_2 = Body(2, .5, 1., np.array([.0, .0, -5.]), np.array([0., 0., 0.]), Q)
         self.l_bodies.append(self.body_1)
         self.l_bodies.append(self.body_2)
 
@@ -93,14 +93,14 @@ class Scene03:
         self.update_vector_field()
         print("Init Vector Field...Finished")
 
-    def init_charge_lines(self):
+    def init_field_lines(self):
         # Create charge line obj
-        self.charge_lines = ChargeLines(160., 10000, .1)
+        self.field_lines = FieldLines(30., 10000, .1)
         # Add bodies
         for body in self.l_bodies:
-            self.charge_lines.add_body(body)
+            self.field_lines.add_body(body)
         # Generate Lines
-        self.charge_lines.generate_lines()
+        self.field_lines.generate_lines()
 
     def dir(self, vec):
         return np.array(vec * 1. / np.linalg.norm(vec))
@@ -126,7 +126,7 @@ class Scene03:
         if self.vector_field_enabled:
             self.v_field.draw(self.g_manager)
         if self.line_charges_enabled:
-            self.charge_lines.draw(self.g_manager)
+            self.field_lines.draw(self.g_manager)
 
     def draw_bodies(self):
         for body in self.l_bodies:
@@ -146,18 +146,15 @@ class Scene03:
     def update(self):
         e_1 = self.body_1.get_electric_field(self.controlled_body.b_pos)
         e_2 = self.body_2.get_electric_field(self.controlled_body.b_pos)
-        #print("E_1", e_1, "E_2", e_2)
         self.E =  e_1 + e_2
-        # self.controlled_body.b_aceleration = self.E * (self.controlled_body.b_charge/self.controlled_body.b_mass)
         self.F = self.E * self.controlled_body.b_charge
-        # self.controlled_body.update(self.get_sim_dt())
         self.controlled_body.update(self.dt*self.dt_k)
         self.update_graphs()
     
     def update_graphs(self):
-        self.graph_f_x.put(np.array([float(self.t_total), float(self.F[0])]))# float(self.controlled_body.b_pos[2])]))
-        self.graph_f_y.put(np.array([float(self.t_total), float(self.F[1])]))# loat(self.controlled_body.b_vel[2])]))
-        self.graph_f_z.put(np.array([float(self.t_total), float(self.F[2])]))# float(self.controlled_body.b_aceleration[2])]))
+        self.graph_f_x.put(np.array([float(self.t_total), float(self.F[0])]))
+        self.graph_f_y.put(np.array([float(self.t_total), float(self.F[1])]))
+        self.graph_f_z.put(np.array([float(self.t_total), float(self.F[2])]))
         
         
     def update_vector_field(self):

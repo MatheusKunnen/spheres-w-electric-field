@@ -5,29 +5,32 @@ import math
 
 from VectorUtils import VectorUtils
 
-class ChargeLines:
+class FieldLines:
 
     DEFAULT_K_LINE = .25
     K_RADIUS = 1.5
 
-    def __init__(self, max_distance, max_iterations, k_line = None):
+    def __init__(self, max_distance, max_iterations, k_line=None, v_density=None):
         self.max_distance = max_distance
         self.max_iterations = max_iterations
-        self.k_line = k_line if k_line != None else ChargeLines.DEFAULT_K_LINE
+        self.v_density = v_density
+        self.k_line = k_line if k_line != None else FieldLines.DEFAULT_K_LINE
         self.l_bodies = []
         self.l_lines = []
 
-    def generate_lines(self, min_e=0.000001):
+    def generate_lines(self, min_e=0.0000001):
         print("Generate Lines...Starting")
         # Reset variables
         self.l_lines = []
         init_points = []
+        only_positive_charges = True
         # Generate start points for the lines
         for body in self.l_bodies:
             # Using only positive charges to avoid generating redundant lines
             if body.b_charge < 0:
+                only_positive_charges = False
                 continue
-            init_points += body.get_charge_lines_init(2.)
+            init_points += body.get_field_lines_init(2.,  k_lines=self.v_density)
         # Generate line for each point
         for point in init_points:
             # Start line
@@ -35,6 +38,7 @@ class ChargeLines:
             line.append(np.array(point))
             i = 0
             is_running = True
+            control_point = None
             while is_running: 
                 p = np.array([0., 0., 0.])
                 # Calculate de electric field
@@ -49,7 +53,15 @@ class ChargeLines:
                 # Get direction of the electric field & adjust its length
                 if norm > self.k_line:
                     p = self.dir(p) * self.k_line
-
+                if control_point is None:
+                    control_point = np.array(p)
+                elif round(VectorUtils.norm_2(control_point - p), 8) == 0:
+                    if not only_positive_charges:
+                        line = []
+                    break
+                else:
+                    control_point = (control_point + p)/2.
+                    
                 # print(p) # DEBUG
                 # Add point to line
                 line.append(line[i] + p)
