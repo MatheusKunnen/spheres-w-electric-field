@@ -61,7 +61,7 @@ class Scene03:
         self.E = np.array([0., 0., 0.])
         self.F = (0., 0., 0.)
         # Init bodies
-        self.body_1 = Body(1, .5, 1., np.array([.0, .0, 5.]), np.array([0., 0., 0.]), 2*Q)
+        self.body_1 = Body(1, .5, 1., np.array([.0, .0, 5.]), np.array([0., 0., 0.]), -Q)
         self.body_2 = Body(2, .5, 1., np.array([.0, .0, -5.]), np.array([0., 0., 0.]), Q)
         self.l_bodies.append(self.body_1)
         self.l_bodies.append(self.body_2)
@@ -95,7 +95,7 @@ class Scene03:
 
     def init_field_lines(self):
         # Create charge line obj
-        self.field_lines = FieldLines(30., 10000, .1)
+        self.field_lines = FieldLines(120., 10000, .1)
         # Add bodies
         for body in self.l_bodies:
             self.field_lines.add_body(body)

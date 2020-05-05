@@ -105,9 +105,6 @@ class Scene05:
             self.field_lines.add_body(body)
         # Generate Lines
         self.field_lines.generate_lines(min_e=0.0001)
-
-    def dir(self, vec):
-        return np.array(vec * 1. / np.linalg.norm(vec))
         
     def run(self):
         self.is_running = self.g_manager.init_display()
